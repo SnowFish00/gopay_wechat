@@ -1,0 +1,8 @@
+# 忽略yml文件
+*.yml
+
+# 忽略pem文件
+*.pem
+
+#忽略mac缓存文件
+*.DS_Store
