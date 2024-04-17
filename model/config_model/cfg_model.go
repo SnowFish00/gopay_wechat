@@ -9,9 +9,12 @@ type Config struct {
 
 type WxClient struct {
 	MchId      string `mapstructure:"mchId"`
+	AppID      string `mapstructure:"appId"`
+	AppSecret  string `mapstructure:"appSecret"`
 	SerialNo   string `mapstructure:"serialNo"`
 	ApiV3Key   string `mapstructure:"apiV3Key"`
 	PrivateKey string `mapstructure:"privateKey"`
+	NotifyUrl  string `mapstructure:"notifyUrl"`
 }
 
 type HttpServer struct {
@@ -30,4 +33,9 @@ type Mysql struct {
 
 type Log struct {
 	Path string `mapstructure:"path"`
+}
+
+type Good struct {
+	Description string
+	Monry_cent  uint
 }
