@@ -149,3 +149,73 @@ wx.requestPayment({
 	}
   });
 */
+
+func WxPayNotify(c *gin.Context, cfg model_cfg.Config) {
+	notifyReq, err := wechat.V3ParseNotify(c.Request)
+	if err != nil {
+		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: gopay.FAIL, Message: "回调内容异常"})
+		return
+	}
+
+	// client
+	clientV3 := cfg.NewClientV3Engine()
+
+	// 验证异步通知的签名
+	err = notifyReq.VerifySignByPK(clientV3.WxPublicKey())
+	if err != nil {
+		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: gopay.FAIL, Message: "内容验证失败"})
+		return
+	}
+
+	// 普通支付通知解密
+	result, rErr := notifyReq.DecryptCipherText(cfg.WxClient.ApiV3Key)
+	if rErr != nil {
+		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: gopay.FAIL, Message: "内容解密失败"})
+		return
+	}
+
+	//success
+	if result != nil && result.TradeState == "SUCCESS" {
+		var wxReq = make(map[string]interface{})
+		//优惠总额
+		promotionAmount := 0
+		for i := range result.PromotionDetail {
+			promotionAmount += result.PromotionDetail[i].Amount
+		}
+
+		//商户订单号:商户系统内部订单号
+		wxReq["pay_no"] = result.OutTradeNo
+		//微信支付订单号:微信支付系统生成的订单号。
+		wxReq["trade_no"] = result.TransactionId
+		//与支付宝同步
+		wxReq["trade_status"] = "TRADE_SUCCESS"
+		wxReq["notify_time"] = result.SuccessTime
+		//用户应支付总额
+		wxReq["total_amount"] = result.Amount.Total
+		//实际支付总额与优惠总额
+		wxReq["receipt_amount"] = result.Amount.PayerTotal + promotionAmount
+		var mapData = make(map[string]interface{})
+		mapData["data_type"] = "PayNotify"
+		mapData["param"] = map[string]interface{}{"payType": "wxPay", "notifyReq": wxReq}
+		reqJson, _ := json.Marshal(mapData)
+
+		//可在此处向外发送reqJson
+		//PushMessToPayQueue
+		utils.PushMessToPayQueue(reqJson)
+
+		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: gopay.SUCCESS, Message: "成功"})
+
+		return
+	}
+
+}
+
+// WxTestV3Query 交易查询
+func WxTestV3Query(no string, cfg model_cfg.Config) *wechat.QueryOrderRsp {
+	clientV3 := cfg.NewClientV3Engine()
+	wxRsp, err := clientV3.V3TransactionQueryOrder(context.Background(), wechat.OutTradeNo, no)
+	if err != nil {
+		return nil
+	}
+	return wxRsp
+}
