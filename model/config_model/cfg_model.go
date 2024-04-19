@@ -36,6 +36,6 @@ type Log struct {
 }
 
 type Good struct {
-	Description string
-	Monry_cent  uint
+	Description string `json:"description"`
+	MonryCent   uint   `json:"monry_cent"`
 }

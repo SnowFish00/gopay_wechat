@@ -69,7 +69,7 @@ func (WxPayIstance) AppletPay(c *gin.Context, Good model_cfg.Good) (PrepayID str
 		Set("time_expire", expire).
 		Set("notify_url", cfg.WxClient.NotifyUrl).
 		SetBodyMap("amount", func(bm gopay.BodyMap) {
-			bm.Set("total", Good.Monry_cent).
+			bm.Set("total", Good.MonryCent).
 				Set("currency", "CNY")
 		}).
 		SetBodyMap("payer", func(bm gopay.BodyMap) {
@@ -99,7 +99,7 @@ func (WxPayIstance) H5Pay(c *gin.Context, Good model_cfg.Good) (wxRsp *wechat.H5
 		Set("time_expire", expire).
 		Set("notify_url", cfg.WxClient.NotifyUrl).
 		SetBodyMap("amount", func(b gopay.BodyMap) {
-			b.Set("total", Good.Monry_cent).
+			b.Set("total", Good.MonryCent).
 				Set("currency", "CNY")
 		}).
 		SetBodyMap("scene_info", func(b gopay.BodyMap) {
