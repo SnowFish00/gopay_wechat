@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"pay/global"
 	model_cfg "pay/model/config_model"
 	"pay/utils"
 	"time"
@@ -13,18 +14,22 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/go-pay/gopay"
 	"github.com/go-pay/gopay/wechat/v3"
+	"github.com/go-pay/xlog"
 )
 
 const (
 	code2sessionURL = "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code"
 )
 
-func GetOpenID(c *gin.Context, wx_cfg model_cfg.WxClient) (string, error) {
+type WxPayIstance struct {
+}
+
+func GetOpenIDBycode2Session(c *gin.Context) (string, error) {
 	//获取code
 	code := c.PostForm("code")
-
+	wx_cfg := global.ReturnCfg()
 	//调用auth.code2Session接口获取openid
-	url := fmt.Sprintf(code2sessionURL, wx_cfg.AppID, wx_cfg.AppSecret, code)
+	url := fmt.Sprintf(code2sessionURL, wx_cfg.WxClient.AppID, wx_cfg.WxClient.AppSecret, code)
 	resp, err := http.Get(url)
 	if err != nil {
 		return "", err
@@ -39,14 +44,23 @@ func GetOpenID(c *gin.Context, wx_cfg model_cfg.WxClient) (string, error) {
 	return wxMap["openid"], err
 }
 
-func AppletPay(c *gin.Context, Good model_cfg.Good, cfg model_cfg.Config) (PrepayID string, Error error) {
+func GetOpenIDByFront() string {
+	return ""
+}
+
+func (WxPayIstance) AppletPay(c *gin.Context, Good model_cfg.Good) (PrepayID string, Error error) {
 	expire := time.Now().Add(10 * time.Minute).Format(time.RFC3339)
+
 	uuid := utils.NewUuid32
+
 	bm := make(gopay.BodyMap)
-	openid, err := GetOpenID(c, cfg.WxClient)
+
+	openid, err := GetOpenIDBycode2Session(c)
 	if err != nil {
 		return "", err
 	}
+
+	cfg := global.ReturnCfg()
 
 	bm.Set("appid", cfg.WxClient.AppID).
 		Set("mchid", cfg.WxClient.MchId).
@@ -62,7 +76,7 @@ func AppletPay(c *gin.Context, Good model_cfg.Good, cfg model_cfg.Config) (Prepa
 			bm.Set("openid", openid)
 		})
 
-	clientV3 := cfg.NewClientV3Engine()
+	clientV3 := global.ReturnClient()
 
 	wxRsp, err := clientV3.V3TransactionJsapi(context.Background(), bm)
 	if err != nil {
@@ -73,14 +87,11 @@ func AppletPay(c *gin.Context, Good model_cfg.Good, cfg model_cfg.Config) (Prepa
 
 }
 
-func H5Pay(c *gin.Context, Good model_cfg.Good, cfg model_cfg.Config) (wxRsp *wechat.H5Rsp, Error error) {
+func (WxPayIstance) H5Pay(c *gin.Context, Good model_cfg.Good) (wxRsp *wechat.H5Rsp, Error error) {
 	uuid := utils.NewUuid32()
 	expire := time.Now().Add(10 * time.Minute).Format(time.RFC3339)
 	bm := make(gopay.BodyMap)
-	// openid, err := GetOpenID(c, cfg.WxClient)
-	// if err != nil {
-	// 	return "", err
-	// }
+	cfg := global.ReturnCfg()
 	bm.Set("appid", cfg.WxClient.AppID).
 		Set("mchid", cfg.WxClient.MchId).
 		Set("description", Good.Description).
@@ -110,7 +121,7 @@ func H5Pay(c *gin.Context, Good model_cfg.Good, cfg model_cfg.Config) (wxRsp *we
 				})
 		})
 
-	clientV3 := cfg.NewClientV3Engine()
+	clientV3 := global.ReturnClient()
 
 	wxRsp, err := clientV3.V3TransactionH5(context.Background(), bm)
 	if err != nil {
@@ -120,10 +131,11 @@ func H5Pay(c *gin.Context, Good model_cfg.Good, cfg model_cfg.Config) (wxRsp *we
 	return wxRsp, errors.New(wxRsp.Error)
 }
 
-func PaySignOfApplet(cfg model_cfg.Config, Prepayid string) (*wechat.AppletParams, error) {
-	clientV3 := cfg.NewClientV3Engine()
+func (WxPayIstance) PaySignOfApplet(Prepayid string) (*wechat.AppletParams, error) {
+	cfg := global.ReturnCfg()
+	clientV3 := global.ReturnClient()
 	// 小程序
-	applet, err := clientV3.PaySignOfApplet("appid", "prepayid")
+	applet, err := clientV3.PaySignOfApplet(cfg.WxClient.AppID, Prepayid)
 	return applet, err
 }
 
@@ -150,15 +162,18 @@ wx.requestPayment({
   });
 */
 
-func WxPayNotify(c *gin.Context, cfg model_cfg.Config) {
+// 异步回调
+func (WxPayIstance) WxPayNotify(c *gin.Context) {
 	notifyReq, err := wechat.V3ParseNotify(c.Request)
 	if err != nil {
 		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: gopay.FAIL, Message: "回调内容异常"})
 		return
 	}
 
+	cfg := global.ReturnCfg()
+
 	// client
-	clientV3 := cfg.NewClientV3Engine()
+	clientV3 := global.ReturnClient()
 
 	// 验证异步通知的签名
 	err = notifyReq.VerifySignByPK(clientV3.WxPublicKey())
@@ -210,9 +225,21 @@ func WxPayNotify(c *gin.Context, cfg model_cfg.Config) {
 
 }
 
-// WxTestV3Query 交易查询
-func WxTestV3Query(no string, cfg model_cfg.Config) *wechat.QueryOrderRsp {
-	clientV3 := cfg.NewClientV3Engine()
+// 同步验签
+func (WxPayIstance) WxPayNotifySyn(wxRsp *wechat.PrepayRsp) {
+	clientV3 := global.ReturnClient()
+	pkMap := clientV3.WxPublicKeyMap()
+	// wxPublicKey：微信平台证书公钥内容，通过 client.WxPublicKeyMap() 获取，然后根据 signInfo.HeaderSerial 获取相应的公钥
+	err := wechat.V3VerifySignByPK(wxRsp.SignInfo.HeaderTimestamp, wxRsp.SignInfo.HeaderNonce, wxRsp.SignInfo.SignBody, wxRsp.SignInfo.HeaderSignature, pkMap[wxRsp.SignInfo.HeaderSerial])
+	if err != nil {
+		xlog.Error(err)
+		return
+	}
+}
+
+// WxTestV3Query 交易查询 no TransactionId or utTradeNo
+func (WxPayIstance) WxTestV3Query(no string) *wechat.QueryOrderRsp {
+	clientV3 := global.ReturnClient()
 	wxRsp, err := clientV3.V3TransactionQueryOrder(context.Background(), wechat.OutTradeNo, no)
 	if err != nil {
 		return nil
