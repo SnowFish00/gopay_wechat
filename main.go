@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
 	config_viper "pay/config/vipper"
 	"pay/global"
 	log "pay/log/zap"
 	"pay/mysql"
+	"pay/router"
 )
 
 func init() {
@@ -17,5 +17,6 @@ func init() {
 }
 
 func main() {
-	fmt.Println(global.ReturnCfg())
+	// test.AddTest()
+	router.InitRouter()
 }
