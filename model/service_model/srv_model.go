@@ -40,19 +40,36 @@ type ChargeMessage struct {
 
 type HttpChargeBlance struct {
 	gorm.Model
-	UserID  string
-	Openid  string
-	Phone   string
-	Blance  string
-	StoreID string
+	UserID        string
+	Openid        string
+	Phone         string
+	Blance        int
+	StoreID       string
+	OutTradeNo    string
+	TransactionId string
 }
 
 type HttpReduceBlance struct {
 	gorm.Model
-	UserID  string
-	Openid  string
-	Phone   string
-	Blance  string
-	StoreID string
-	Remark  string
+	UserID        string
+	Openid        string
+	Phone         string
+	Blance        int
+	StoreID       string
+	Remark        string
+	OutTradeNo    string
+	TransactionId string
+}
+
+type IDS struct {
+	IDSUserID  string
+	IDSOpenid  string
+	IDSPhone   string
+	IDSStoreID string
+}
+
+type Response struct {
+	State int    `json:"state"`
+	Msg   string `json:"msg"`
+	Data  bool   `json:"data"`
 }

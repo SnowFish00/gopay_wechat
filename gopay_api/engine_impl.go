@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"pay/global"
 	model_cfg "pay/model/config_model"
+	model_srv "pay/model/service_model"
 	"pay/utils"
 	"time"
 
@@ -162,12 +163,24 @@ wx.requestPayment({
   });
 */
 
-// 异步回调
-func (WxPayIstance) WxPayNotify(c *gin.Context) {
+// 异步回调 前端附带 openid phone userid
+func (WxPayIstance) WxPayNotify(c *gin.Context) (model_srv.IDS, map[string]interface{}, *wechat.V3DecryptResult, error) {
+
+	user_id := c.PostForm("ids_userId")
+	user_phone := c.PostForm("ids_phone")
+	user_openid := c.PostForm("ids_openId")
+	storeid := c.PostForm("ids_storeid")
+
+	ids := model_srv.IDS{
+		IDSUserID:  user_id,
+		IDSOpenid:  user_openid,
+		IDSPhone:   user_phone,
+		IDSStoreID: storeid,
+	}
 	notifyReq, err := wechat.V3ParseNotify(c.Request)
 	if err != nil {
 		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: gopay.FAIL, Message: "回调内容异常"})
-		return
+		return model_srv.IDS{}, nil, nil, err
 	}
 
 	cfg := global.ReturnCfg()
@@ -179,14 +192,14 @@ func (WxPayIstance) WxPayNotify(c *gin.Context) {
 	err = notifyReq.VerifySignByPK(clientV3.WxPublicKey())
 	if err != nil {
 		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: gopay.FAIL, Message: "内容验证失败"})
-		return
+		return model_srv.IDS{}, nil, nil, err
 	}
 
 	// 普通支付通知解密
 	result, rErr := notifyReq.DecryptCipherText(cfg.WxClient.ApiV3Key)
 	if rErr != nil {
 		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: gopay.FAIL, Message: "内容解密失败"})
-		return
+		return model_srv.IDS{}, nil, nil, err
 	}
 
 	//success
@@ -212,16 +225,14 @@ func (WxPayIstance) WxPayNotify(c *gin.Context) {
 		var mapData = make(map[string]interface{})
 		mapData["data_type"] = "PayNotify"
 		mapData["param"] = map[string]interface{}{"payType": "wxPay", "notifyReq": wxReq}
-		reqJson, _ := json.Marshal(mapData)
 
-		//可在此处向外发送reqJson
-		//PushMessToPayQueue
-		utils.PushMessToPayQueue(reqJson)
+		// reqJson, _ := json.Marshal(mapData)
+		// Json := string(reqJson)
 
-		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: gopay.SUCCESS, Message: "成功"})
-
-		return
+		return ids, mapData, result, nil
 	}
+
+	return model_srv.IDS{}, nil, nil, errors.New("FialedPayment")
 
 }
 
@@ -237,8 +248,8 @@ func (WxPayIstance) WxPayNotifySyn(wxRsp *wechat.PrepayRsp) {
 	}
 }
 
-// WxTestV3Query 交易查询 no TransactionId or utTradeNo
-func (WxPayIstance) WxTestV3Query(no string) *wechat.QueryOrderRsp {
+// WxTestV3Query 交易查询 no TransactionId or outTradeNo
+func (WxPayIstance) WxV3Query(no string) *wechat.QueryOrderRsp {
 	clientV3 := global.ReturnClient()
 	wxRsp, err := clientV3.V3TransactionQueryOrder(context.Background(), wechat.OutTradeNo, no)
 	if err != nil {

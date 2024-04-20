@@ -11,7 +11,3 @@ func NewUuid32() string {
 	uuidStr := strings.Replace(uuidObj.String(), "-", "", -1)
 	return uuidStr
 }
-
-func PushMessToPayQueue(reqJson []byte) {
-	//消息队列发送
-}

@@ -18,8 +18,9 @@ type WxClient struct {
 }
 
 type HttpServer struct {
-	Origin string `mapstructure:"origin"`
-	Port   string `mapstructure:"port"`
+	Origin     string `mapstructure:"origin"`
+	Port       string `mapstructure:"port"`
+	AdminToken string `mapstructure:"adminToken"`
 }
 
 type Mysql struct {
