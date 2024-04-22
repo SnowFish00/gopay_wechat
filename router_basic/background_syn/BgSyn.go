@@ -50,3 +50,45 @@ func ChargeAddSyn(IDS model_srv.IDS, balance int) []byte {
 	return body
 
 }
+
+func ChargeReduceSyn(idsr model_srv.IDSR) []byte {
+	requestData := map[string]interface{}{
+		"userId":  idsr.IDSUserID,
+		"storeId": idsr.IDSStoreID,
+		"balance": idsr.Balance,
+		"remark":  "系统操作扣费",
+	}
+
+	jsonStr, err := json.Marshal(requestData)
+	if err != nil {
+		fmt.Println("Error marshalling JSON:", err)
+		return nil
+	}
+
+	req, err := http.NewRequest("POST", "http://127.0.0.1:8848/ajax/admin/balance/reduceBalance", bytes.NewBuffer(jsonStr))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return nil
+	}
+
+	req.Header.Set("Cookie", global.ReturnCfg().HttpServer.AdminToken)
+
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending request:", err)
+		return nil
+	}
+	defer resp.Body.Close()
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response:", err)
+		return nil
+	}
+
+	return body
+
+}

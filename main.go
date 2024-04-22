@@ -18,5 +18,6 @@ func init() {
 
 func main() {
 	// test.AddTest()
+	// test.ReduceTest()
 	router.InitRouter()
 }

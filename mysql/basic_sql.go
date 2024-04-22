@@ -69,3 +69,25 @@ func BackGroundSynAdd(IDS model_srv.IDS, result *wechat.V3DecryptResult) error {
 	}
 
 }
+
+func BackGroundSynReduce(IDSR model_srv.IDSR) error {
+	db := global.ReturnDB()
+
+	toSave := model_srv.HttpReduceBlance{
+		UserID:  IDSR.IDSUserID,
+		Openid:  IDSR.IDSOpenid,
+		Phone:   IDSR.IDSPhone,
+		Blance:  IDSR.Balance,
+		StoreID: IDSR.IDSStoreID,
+	}
+
+	saveResult := db.Where("open_id = ?", toSave.Openid).Save(&toSave)
+
+	if saveResult.Error != nil || saveResult.RowsAffected == 0 {
+		return errors.New("db error")
+	} else {
+		fmt.Println("User created successfully")
+		return nil
+	}
+
+}

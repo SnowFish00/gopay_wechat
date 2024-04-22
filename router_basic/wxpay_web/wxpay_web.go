@@ -63,13 +63,22 @@ func PayNotify(c *gin.Context) {
 
 	if err == nil {
 		//协程二次操作
-		go PushMessToPayQueue(ids, resultMap, result)
+		go PushChargeMessToPayQueue(ids, resultMap, result)
 		responses.OkWithDetailed(&wechat.V3NotifyRsp{Code: gopay.SUCCESS, Message: "成功"}, "ok", c)
 
 	} else {
 		responses.FailWithMessage(responses.ParamErr, "交易检验失败", c)
 	}
 
+}
+
+func ReduceNotify(c *gin.Context) {
+	idsr := gopay_api.PayReduce(c)
+	if idsr.Balance <= 0 {
+		responses.FailWithMessage(responses.ParamErr, "停止攻击行为,ok?", c)
+		return
+	}
+	PushReduceMessToPayQueue(idsr)
 }
 
 func SearchOrder(c *gin.Context) {
@@ -84,7 +93,7 @@ func SearchOrder(c *gin.Context) {
 
 }
 
-func PushMessToPayQueue(ids model_srv.IDS, resultMap map[string]interface{}, result *wechat.V3DecryptResult) {
+func PushChargeMessToPayQueue(ids model_srv.IDS, resultMap map[string]interface{}, result *wechat.V3DecryptResult) {
 	//二次操作
 	body := backgroundsyn.ChargeAddSyn(ids, result.Amount.Total)
 
@@ -96,10 +105,26 @@ func PushMessToPayQueue(ids model_srv.IDS, resultMap map[string]interface{}, res
 	if response.State == 200 {
 		err := mysql.BackGroundSynAdd(ids, result)
 		if err != nil {
-			log.Fatalln(err.Error())
+			log.Println(err.Error())
 		}
 	}
 
-	log.Fatalln("http error")
+}
+
+func PushReduceMessToPayQueue(idsr model_srv.IDSR) {
+	//二次操作
+	body := backgroundsyn.ChargeReduceSyn(idsr)
+
+	var response model_srv.Response
+	if err := json.Unmarshal(body, &response); err != nil {
+		fmt.Println("Error unmarshalling JSON:", err)
+	}
+
+	if response.State == 200 {
+		err := mysql.BackGroundSynReduce(idsr)
+		if err != nil {
+			log.Println(err.Error())
+		}
+	}
 
 }

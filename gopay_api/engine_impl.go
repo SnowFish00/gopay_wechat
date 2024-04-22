@@ -10,6 +10,7 @@ import (
 	model_cfg "pay/model/config_model"
 	model_srv "pay/model/service_model"
 	"pay/utils"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -256,4 +257,24 @@ func (WxPayIstance) WxV3Query(no string) *wechat.QueryOrderRsp {
 		return nil
 	}
 	return wxRsp
+}
+
+// 扣费
+func PayReduce(c *gin.Context) model_srv.IDSR {
+	user_id := c.PostForm("ids_userId")
+	user_phone := c.PostForm("ids_phone")
+	user_openid := c.PostForm("ids_openId")
+	storeid := c.PostForm("ids_storeid")
+	balance := c.PostForm("balance")
+	balanceInt, _ := strconv.Atoi(balance)
+
+	idsr := model_srv.IDSR{
+		IDSUserID:  user_id,
+		IDSOpenid:  user_openid,
+		IDSPhone:   user_phone,
+		IDSStoreID: storeid,
+		Balance:    balanceInt,
+	}
+
+	return idsr
 }

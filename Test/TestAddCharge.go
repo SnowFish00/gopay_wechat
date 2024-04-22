@@ -7,6 +7,7 @@ import (
 	"log"
 	"pay/global"
 	model_srv "pay/model/service_model"
+	"pay/mysql"
 	backgroundsyn "pay/router_basic/background_syn"
 )
 
@@ -53,6 +54,32 @@ func AddTest() {
 
 	if response.State == 200 {
 		err := BackGroundSynAddTest(ids, 100, "afr56&44372", "wx09#558&11")
+		if err != nil {
+			log.Fatalln(err.Error())
+		}
+	}
+
+}
+
+func ReduceTest() {
+	idsr := model_srv.IDSR{
+		IDSUserID:  "5",
+		IDSStoreID: "1",
+		IDSPhone:   "13919898999",
+		Balance:    100,
+	}
+
+	body := backgroundsyn.ChargeReduceSyn(idsr)
+
+	var response model_srv.Response
+	if err := json.Unmarshal(body, &response); err != nil {
+		fmt.Println("Error unmarshalling JSON:", err)
+	}
+
+	log.Println(response.State)
+
+	if response.State == 200 {
+		err := mysql.BackGroundSynReduce(idsr)
 		if err != nil {
 			log.Fatalln(err.Error())
 		}

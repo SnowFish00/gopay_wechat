@@ -14,7 +14,9 @@ func InitRouter() {
 	{
 		pay.POST("OrderBegin", wxpay_web.StartOrder)
 		pay.POST("PayNotify", wxpay_web.PayNotify)
+		pay.POST("ReduceNotify", wxpay_web.ReduceNotify)
 		pay.POST("SearchOrder", wxpay_web.SearchOrder)
+
 	}
 
 	r.Run(":8080")

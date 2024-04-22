@@ -51,14 +51,12 @@ type HttpChargeBlance struct {
 
 type HttpReduceBlance struct {
 	gorm.Model
-	UserID        string
-	Openid        string
-	Phone         string
-	Blance        int
-	StoreID       string
-	Remark        string
-	OutTradeNo    string
-	TransactionId string
+	UserID  string
+	Openid  string
+	Phone   string
+	Blance  int
+	StoreID string
+	Remark  string
 }
 
 type IDS struct {
@@ -66,6 +64,14 @@ type IDS struct {
 	IDSOpenid  string
 	IDSPhone   string
 	IDSStoreID string
+}
+
+type IDSR struct {
+	IDSUserID  string
+	IDSOpenid  string
+	IDSPhone   string
+	IDSStoreID string
+	Balance    int
 }
 
 type Response struct {
