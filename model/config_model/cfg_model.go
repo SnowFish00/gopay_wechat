@@ -5,6 +5,7 @@ type Config struct {
 	HttpServer HttpServer
 	Mysql      Mysql
 	Log        Log
+	Test       Test
 }
 
 type WxClient struct {
@@ -39,4 +40,8 @@ type Log struct {
 type Good struct {
 	Description string `json:"description"`
 	MonryCent   uint   `json:"monry_cent"`
+}
+
+type Test struct {
+	OpenID string `mapstructure:"wx_openid"`
 }
