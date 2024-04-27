@@ -11,16 +11,16 @@ import (
 	backgroundsyn "pay/router_basic/background_syn"
 )
 
-func BackGroundSynAddTest(IDS model_srv.IDS, Total int, OutNo string, TraID string) error {
+func BackGroundSynAddTest(IDSO model_srv.IDSO, Total int, OutNo string, TraID string) error {
 
 	db := global.ReturnDB()
 
 	toSave := model_srv.HttpChargeBlance{
-		UserID:        IDS.IDSUserID,
-		Openid:        IDS.IDSOpenid,
-		Phone:         IDS.IDSPhone,
+		UserID:        IDSO.IDSUserID,
+		Openid:        IDSO.IDSOpenid,
+		Phone:         IDSO.IDSPhone,
 		Blance:        Total,
-		StoreID:       IDS.IDSStoreID,
+		StoreID:       IDSO.IDSStoreID,
 		OutTradeNo:    OutNo,
 		TransactionId: TraID,
 	}
@@ -37,13 +37,13 @@ func BackGroundSynAddTest(IDS model_srv.IDS, Total int, OutNo string, TraID stri
 }
 
 func AddTest() {
-	ids := model_srv.IDS{
+	idso := model_srv.IDSO{
 		IDSUserID:  "5",
 		IDSStoreID: "1",
 		IDSPhone:   "13919898999",
 	}
 
-	body := backgroundsyn.ChargeAddSyn(ids, 100)
+	body := backgroundsyn.ChargeAddSyn(idso, 100)
 
 	var response model_srv.Response
 	if err := json.Unmarshal(body, &response); err != nil {
@@ -53,7 +53,7 @@ func AddTest() {
 	log.Println(response.State)
 
 	if response.State == 200 {
-		err := BackGroundSynAddTest(ids, 100, "afr56&44372", "wx09#558&11")
+		err := BackGroundSynAddTest(idso, 100, "afr56&44372", "wx09#558&11")
 		if err != nil {
 			log.Fatalln(err.Error())
 		}

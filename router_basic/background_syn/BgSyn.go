@@ -10,10 +10,10 @@ import (
 	model_srv "pay/model/service_model"
 )
 
-func ChargeAddSyn(IDS model_srv.IDS, balance int) []byte {
+func ChargeAddSyn(IDSO model_srv.IDSO, balance int) []byte {
 	requestData := map[string]interface{}{
-		"userId":  IDS.IDSUserID,
-		"storeId": IDS.IDSStoreID,
+		"userId":  IDSO.IDSUserID,
+		"storeId": IDSO.IDSStoreID,
 		"balance": balance,
 	}
 

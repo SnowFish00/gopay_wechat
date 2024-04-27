@@ -28,6 +28,7 @@ func SaveWxPayDetils(result *wechat.V3DecryptResult) {
 		Amount: model_srv.Amount{
 			Total:         result.Amount.Total,
 			PayerTotal:    result.Amount.PayerTotal,
+			DiscountTotal: result.Amount.DiscountTotal,
 			Currency:      result.Amount.Currency,
 			PayerCurrency: result.Amount.PayerCurrency,
 		},
@@ -39,22 +40,22 @@ func SaveWxPayDetils(result *wechat.V3DecryptResult) {
 	saveResult := db.Create(&toSave)
 
 	if saveResult.Error != nil || saveResult.RowsAffected == 0 {
-		fmt.Println("Failed to create user:", saveResult.Error)
+		fmt.Printf("支付记录%s保存失败:\n", result.TransactionId)
 	} else {
-		fmt.Println("User created successfully")
+		fmt.Printf("支付记录%s保存成功:\n", result.TransactionId)
 	}
 
 }
 
-func BackGroundSynAdd(IDS model_srv.IDS, result *wechat.V3DecryptResult) error {
+func BackGroundSynAdd(IDSO model_srv.IDSO, result model_srv.ChargeMessage) error {
 	db := global.ReturnDB()
 
 	toSave := model_srv.HttpChargeBlance{
-		UserID:        IDS.IDSUserID,
-		Openid:        IDS.IDSOpenid,
-		Phone:         IDS.IDSPhone,
+		UserID:        IDSO.IDSUserID,
+		Openid:        IDSO.IDSOpenid,
+		Phone:         IDSO.IDSPhone,
 		Blance:        result.Amount.PayerTotal,
-		StoreID:       IDS.IDSStoreID,
+		StoreID:       IDSO.IDSStoreID,
 		OutTradeNo:    result.OutTradeNo,
 		TransactionId: result.TransactionId,
 	}
@@ -90,4 +91,41 @@ func BackGroundSynReduce(IDSR model_srv.IDSR) error {
 		return nil
 	}
 
+}
+
+func SearchOrderTotalByOpenId(Trno string) model_srv.ChargeMessage {
+	db := global.ReturnDB()
+	var order model_srv.ChargeMessage
+	saveResult := db.Where("transaction_id = ?", Trno).Save(&order)
+	if saveResult.Error != nil || saveResult.RowsAffected == 0 {
+		fmt.Println("查找支付失败")
+		return model_srv.ChargeMessage{}
+	}
+	if order.UsedFlage == 1 {
+		fmt.Println("订单已被记录")
+		return model_srv.ChargeMessage{}
+	}
+	return order
+
+}
+
+func OrderUseOver(Trno string) error {
+	db := global.ReturnDB()
+	var order model_srv.ChargeMessage
+	searchResult := db.Where("transaction_id =?", Trno).First(&order)
+	if searchResult.Error != nil || searchResult.RowsAffected == 0 {
+		fmt.Println("未找到订单")
+		return searchResult.Error
+	}
+
+	order.UsedFlage = 1
+
+	saveResult := db.Save(&order)
+
+	if saveResult.Error != nil || saveResult.RowsAffected == 0 {
+		fmt.Println("修改失败")
+		return saveResult.Error
+	}
+
+	return nil
 }

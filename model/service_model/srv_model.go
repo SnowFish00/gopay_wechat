@@ -2,15 +2,21 @@ package model_srv
 
 import "gorm.io/gorm"
 
+type Good struct {
+	Description string `json:"description"`
+	MonryCent   uint   `json:"monry_cent"`
+}
+
 // wx
 type Payer struct {
-	Openid string
+	Openid string `json:"openid"`
 }
 
 // wx
 type Amount struct {
 	Total         int
 	PayerTotal    int
+	DiscountTotal int
 	Currency      string
 	PayerCurrency string
 }
@@ -36,6 +42,7 @@ type ChargeMessage struct {
 	Payer          Payer     `gorm:"embedded"`
 	Amount         Amount    `gorm:"embedded"`
 	SceneInfo      SceneInfo `gorm:"embedded"`
+	UsedFlage      int
 }
 
 type HttpChargeBlance struct {
@@ -60,10 +67,18 @@ type HttpReduceBlance struct {
 }
 
 type IDS struct {
-	IDSUserID  string
-	IDSOpenid  string
-	IDSPhone   string
-	IDSStoreID string
+	IDSUserID  string `json:"user_id"`
+	IDSOpenid  string `json:"open_id"`
+	IDSPhone   string `json:"phone"`
+	IDSStoreID string `json:"store_id"`
+}
+
+type IDSO struct {
+	IDSUserID  string `json:"user_id"`
+	IDSOpenid  string `json:"open_id"`
+	IDSPhone   string `json:"phone"`
+	IDSStoreID string `json:"store_id"`
+	TrNumber   string `json:"tr_number"`
 }
 
 type IDSR struct {

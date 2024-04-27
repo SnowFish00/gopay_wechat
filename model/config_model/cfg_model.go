@@ -37,11 +37,6 @@ type Log struct {
 	Path string `mapstructure:"path"`
 }
 
-type Good struct {
-	Description string `json:"description"`
-	MonryCent   uint   `json:"monry_cent"`
-}
-
 type Test struct {
 	OpenID string `mapstructure:"wx_openid"`
 }
