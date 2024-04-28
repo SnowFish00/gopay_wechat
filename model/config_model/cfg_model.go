@@ -5,6 +5,7 @@ type Config struct {
 	HttpServer HttpServer
 	Mysql      Mysql
 	Log        Log
+	SynUrl     SynUrl
 	Test       Test
 }
 
@@ -35,6 +36,11 @@ type Mysql struct {
 
 type Log struct {
 	Path string `mapstructure:"path"`
+}
+
+type SynUrl struct {
+	AddURL    string `mapstructure:"add_url"`
+	ReduceURL string `mapstructure:"reduce_url"`
 }
 
 type Test struct {

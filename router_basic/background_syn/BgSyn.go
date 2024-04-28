@@ -23,7 +23,7 @@ func ChargeAddSyn(IDSO model_srv.IDSO, balance int) []byte {
 		return nil
 	}
 
-	req, err := http.NewRequest("POST", "http://127.0.0.1:8848/ajax/admin/balance/recharge", bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest("POST", global.ReturnCfg().SynUrl.AddURL, bytes.NewBuffer(jsonStr))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return nil
@@ -65,7 +65,7 @@ func ChargeReduceSyn(idsrs model_srv.IDSRS) []byte {
 		return nil
 	}
 
-	req, err := http.NewRequest("POST", "http://127.0.0.1:8848/ajax/admin/balance/reduceBalance", bytes.NewBuffer(jsonStr))
+	req, err := http.NewRequest("POST", global.ReturnCfg().SynUrl.ReduceURL, bytes.NewBuffer(jsonStr))
 	if err != nil {
 		fmt.Println("Error creating request:", err)
 		return nil
