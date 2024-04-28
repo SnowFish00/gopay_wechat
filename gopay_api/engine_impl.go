@@ -5,11 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"pay/global"
 	model_srv "pay/model/service_model"
+	responses "pay/response"
 	"pay/utils"
-	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -165,7 +166,8 @@ func (WxPayIstance) WxPayNotify(c *gin.Context) (map[string]interface{}, *wechat
 
 	notifyReq, err := wechat.V3ParseNotify(c.Request)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, &wechat.V3NotifyRsp{Code: gopay.FAIL, Message: "回调内容异常"})
+		// c.JSON(http.StatusBadRequest, &wechat.V3NotifyRsp{Code: gopay.FAIL, Message: "回调内容异常"})
+		log.Printf("回调内容异常: %v \n", err)
 		return nil, nil, err
 	}
 
@@ -177,14 +179,16 @@ func (WxPayIstance) WxPayNotify(c *gin.Context) (map[string]interface{}, *wechat
 	// 验证异步通知的签名
 	err = notifyReq.VerifySignByPK(clientV3.WxPublicKey())
 	if err != nil {
-		c.JSON(http.StatusBadRequest, &wechat.V3NotifyRsp{Code: gopay.FAIL, Message: "内容验证失败"})
+		// c.JSON(http.StatusBadRequest, &wechat.V3NotifyRsp{Code: gopay.FAIL, Message: "内容验证失败"})
+		log.Printf("内容验证失败: %v \n", err)
 		return nil, nil, err
 	}
 
 	// 普通支付通知解密
 	result, rErr := notifyReq.DecryptCipherText(cfg.WxClient.ApiV3Key)
 	if rErr != nil {
-		c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: gopay.FAIL, Message: "内容解密失败"})
+		// c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: gopay.FAIL, Message: "内容解密失败"})
+		log.Printf("内容解密失败: %v \n", err)
 		return nil, nil, err
 	}
 
@@ -244,19 +248,10 @@ func (WxPayIstance) WxV3Query(no string) (*wechat.QueryOrderRsp, error) {
 
 // 扣费
 func PayReduce(c *gin.Context) model_srv.IDSR {
-	user_id := c.PostForm("ids_userId")
-	user_phone := c.PostForm("ids_phone")
-	user_openid := c.PostForm("ids_openId")
-	storeid := c.PostForm("ids_storeid")
-	balance := c.PostForm("balance")
-	balanceInt, _ := strconv.Atoi(balance)
-
-	idsr := model_srv.IDSR{
-		IDSUserID:  user_id,
-		IDSOpenid:  user_openid,
-		IDSPhone:   user_phone,
-		IDSStoreID: storeid,
-		Balance:    balanceInt,
+	var idsr model_srv.IDSR
+	if err := c.ShouldBind(&idsr); err != nil {
+		responses.FailWithMessage(responses.ParamErr, "参数错误", c)
+		return idsr
 	}
 
 	return idsr

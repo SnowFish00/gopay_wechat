@@ -12,6 +12,12 @@ type Payer struct {
 	Openid string `json:"openid"`
 }
 
+type GoodAndPayer struct {
+	Description string `json:"description"`
+	MonryCent   uint   `json:"monry_cent"`
+	Openid      string `json:"openid"`
+}
+
 // wx
 type Amount struct {
 	Total         int
@@ -82,11 +88,19 @@ type IDSO struct {
 }
 
 type IDSR struct {
-	IDSUserID  string
-	IDSOpenid  string
-	IDSPhone   string
-	IDSStoreID string
-	Balance    int
+	IDSUserID  string `json:"user_id"`
+	IDSOpenid  string `json:"open_id"`
+	IDSPhone   string `json:"phone"`
+	IDSStoreID string `json:"store_id"`
+	Balance    string `json:"balance"`
+}
+
+type IDSRS struct {
+	IDSUserID  string `json:"user_id"`
+	IDSOpenid  string `json:"open_id"`
+	IDSPhone   string `json:"phone"`
+	IDSStoreID string `json:"store_id"`
+	Balance    int    `json:"balance"`
 }
 
 type Response struct {

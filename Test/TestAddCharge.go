@@ -62,7 +62,7 @@ func AddTest() {
 }
 
 func ReduceTest() {
-	idsr := model_srv.IDSR{
+	idsr := model_srv.IDSRS{
 		IDSUserID:  "5",
 		IDSStoreID: "1",
 		IDSPhone:   "13919898999",

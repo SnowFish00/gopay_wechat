@@ -1,7 +1,6 @@
 package router
 
 import (
-	test "pay/Test"
 	"pay/router_basic/ping"
 	"pay/router_basic/wxpay_web"
 
@@ -12,21 +11,24 @@ func InitRouter() {
 	r := gin.Default()
 	r.MaxMultipartMemory = 5 << 20
 
-	r.GET("ping", ping.Ping)
+	r.GET("ping", ping.Ping) //通过
 
 	pay := r.Group("pay")
 	{
-		pay.POST("OrderBegin", wxpay_web.StartOrder)
-		pay.POST("PayNotify", wxpay_web.PayNotify)
-		pay.POST("AddNotrify", wxpay_web.AddNotrify)
-		pay.POST("ReduceNotify", wxpay_web.ReduceNotify)
-		pay.POST("SearchOrder", wxpay_web.SearchOrder)
+		pay.POST("OrderBegin", wxpay_web.StartOrder)   //通过
+		pay.POST("SearchOrder", wxpay_web.SearchOrder) //通过
 
 	}
 
 	api := r.Group("api")
 	{
-		api.POST("nortify", test.TestPaysigin)
+		api.POST("PayNotify", wxpay_web.PayNotify) //通过
+	}
+
+	syn := r.Group("syn")
+	{
+		syn.POST("AddNotrify", wxpay_web.AddNotrify)     //通过
+		syn.POST("ReduceNotify", wxpay_web.ReduceNotify) //通过
 	}
 
 	r.Run(":3636")

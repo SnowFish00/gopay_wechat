@@ -33,7 +33,7 @@ func SaveWxPayDetils(result *wechat.V3DecryptResult) {
 			PayerCurrency: result.Amount.PayerCurrency,
 		},
 		SceneInfo: model_srv.SceneInfo{
-			DeviceID: result.SceneInfo.DeviceId,
+			DeviceID: "normal",
 		},
 	}
 
@@ -71,15 +71,15 @@ func BackGroundSynAdd(IDSO model_srv.IDSO, result model_srv.ChargeMessage) error
 
 }
 
-func BackGroundSynReduce(IDSR model_srv.IDSR) error {
+func BackGroundSynReduce(IDSRS model_srv.IDSRS) error {
 	db := global.ReturnDB()
 
 	toSave := model_srv.HttpReduceBlance{
-		UserID:  IDSR.IDSUserID,
-		Openid:  IDSR.IDSOpenid,
-		Phone:   IDSR.IDSPhone,
-		Blance:  IDSR.Balance,
-		StoreID: IDSR.IDSStoreID,
+		UserID:  IDSRS.IDSUserID,
+		Openid:  IDSRS.IDSOpenid,
+		Phone:   IDSRS.IDSPhone,
+		Blance:  IDSRS.Balance,
+		StoreID: IDSRS.IDSStoreID,
 	}
 
 	saveResult := db.Where("open_id = ?", toSave.Openid).Save(&toSave)
@@ -96,7 +96,7 @@ func BackGroundSynReduce(IDSR model_srv.IDSR) error {
 func SearchOrderTotalByOpenId(Trno string) model_srv.ChargeMessage {
 	db := global.ReturnDB()
 	var order model_srv.ChargeMessage
-	saveResult := db.Where("transaction_id = ?", Trno).Save(&order)
+	saveResult := db.Where("transaction_id = ?", Trno).Find(&order)
 	if saveResult.Error != nil || saveResult.RowsAffected == 0 {
 		fmt.Println("查找支付失败")
 		return model_srv.ChargeMessage{}

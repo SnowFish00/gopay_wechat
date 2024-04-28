@@ -51,11 +51,11 @@ func ChargeAddSyn(IDSO model_srv.IDSO, balance int) []byte {
 
 }
 
-func ChargeReduceSyn(idsr model_srv.IDSR) []byte {
+func ChargeReduceSyn(idsrs model_srv.IDSRS) []byte {
 	requestData := map[string]interface{}{
-		"userId":  idsr.IDSUserID,
-		"storeId": idsr.IDSStoreID,
-		"balance": idsr.Balance,
+		"userId":  idsrs.IDSUserID,
+		"storeId": idsrs.IDSStoreID,
+		"balance": idsrs.Balance,
 		"remark":  "系统操作扣费",
 	}
 

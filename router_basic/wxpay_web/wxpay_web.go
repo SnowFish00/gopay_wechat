@@ -9,6 +9,7 @@ import (
 	"pay/mysql"
 	responses "pay/response"
 	backgroundsyn "pay/router_basic/background_syn"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-pay/gopay/wechat/v3"
@@ -17,19 +18,19 @@ import (
 func StartOrder(c *gin.Context) {
 	var good model_srv.Good
 	var payer model_srv.Payer
+	var gp model_srv.GoodAndPayer
 	var pay_api gopay_api.PayAPI
 	var instance gopay_api.WxPayIstance
 	pay_api = instance
 
-	if err := c.ShouldBind(&good); err != nil {
-		responses.FailWithMessage(responses.ParamErr, "充值参数错误", c)
+	if err := c.ShouldBind(&gp); err != nil {
+		responses.FailWithMessage(responses.ParamErr, "传递参数错误", c)
 		return
 	}
 
-	if err := c.ShouldBind(&payer); err != nil {
-		responses.FailWithMessage(responses.ParamErr, "openid参数错误", c)
-		return
-	}
+	good.Description = gp.Description
+	good.MonryCent = gp.MonryCent
+	payer.Openid = gp.Openid
 
 	PrepayID, err := pay_api.AppletPay(c, good, payer)
 	if err != nil {
@@ -43,17 +44,8 @@ func StartOrder(c *gin.Context) {
 		return
 	}
 
-	JsonDataBytes, err := json.Marshal(Parms)
-	if err != nil {
-		fmt.Println("JSON marshaling failed:", err)
-		responses.FailWithMessage(responses.ParamErr, "参数转化json失败", c)
-		return
-	}
-
-	json := string(JsonDataBytes)
-
 	//返回给微信支付前端方法 wx.requestPayment
-	responses.OkWithDetailed(json, "订单签发完成", c)
+	responses.OkWithDetailed(Parms, "订单签发完成", c)
 
 }
 
@@ -68,10 +60,12 @@ func PayNotify(c *gin.Context) {
 	if err == nil {
 		//储存支付记录
 		go PushWxPaySave(result)
-		responses.OkWithDetailed(resultMap, "交易完成", c)
+		// responses.OkWithDetailed(resultMap, "交易完成", c)
+		log.Printf("交易完成:%v \n", resultMap)
 
 	} else {
-		responses.FailWithMessage(responses.ParamErr, "交易检验失败", c)
+		// responses.FailWithMessage(responses.ParamErr, "交易检验失败", c)
+		log.Printf("交易校验失败:%v \n", err)
 	}
 
 }
@@ -82,11 +76,20 @@ func AddNotrify(c *gin.Context) {
 
 func ReduceNotify(c *gin.Context) {
 	idsr := gopay_api.PayReduce(c)
-	if idsr.Balance <= 0 {
+	balance, _ := strconv.Atoi(idsr.Balance)
+	idsrs := model_srv.IDSRS{
+		IDSUserID:  idsr.IDSUserID,
+		IDSOpenid:  idsr.IDSOpenid,
+		IDSPhone:   idsr.IDSPhone,
+		IDSStoreID: idsr.IDSStoreID,
+		Balance:    balance,
+	}
+
+	if idsrs.Balance <= 0 {
 		responses.FailWithMessage(responses.ParamErr, "停止攻击行为,ok?", c)
 		return
 	}
-	PushReduceMessToPayQueue(idsr, c)
+	PushReduceMessToPayQueue(idsrs, c)
 }
 
 func SearchOrder(c *gin.Context) {
@@ -94,7 +97,7 @@ func SearchOrder(c *gin.Context) {
 	var instance gopay_api.WxPayIstance
 	pay_api = instance
 
-	no := c.Query("TransactionId")
+	no := c.PostForm("TransactionId")
 	params, err := pay_api.WxV3Query(no)
 	if err != nil {
 		responses.FailWithMessage(responses.ParamErr, "交易查询失败", c)
@@ -150,13 +153,15 @@ func PushChargeMessToPayQueue(c *gin.Context) {
 		}
 
 		responses.OkWithMessage("数据库同步完成", c)
+	} else {
+		responses.FailWithMessage(response.State, "意外的错误", c)
 	}
 
 }
 
-func PushReduceMessToPayQueue(idsr model_srv.IDSR, c *gin.Context) {
+func PushReduceMessToPayQueue(idsrs model_srv.IDSRS, c *gin.Context) {
 	//二次操作
-	body := backgroundsyn.ChargeReduceSyn(idsr)
+	body := backgroundsyn.ChargeReduceSyn(idsrs)
 
 	if len(body) == 0 {
 		responses.FailWithMessage(responses.ServerErr, "后台管理同步错误", c)
@@ -171,14 +176,15 @@ func PushReduceMessToPayQueue(idsr model_srv.IDSR, c *gin.Context) {
 	}
 
 	if response.State == 200 {
-		err := mysql.BackGroundSynReduce(idsr)
+		err := mysql.BackGroundSynReduce(idsrs)
 		if err != nil {
 			responses.FailWithMessage(responses.SQLErr, "数据库同步失败", c)
 			log.Println(err.Error())
 			return
 		}
-
 		responses.OkWithMessage("数据库同步完成", c)
+	} else {
+		responses.FailWithMessage(response.State, "意外的错误", c)
 	}
 
 }
