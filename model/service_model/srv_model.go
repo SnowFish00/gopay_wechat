@@ -103,6 +103,10 @@ type IDSRS struct {
 	Balance    int    `json:"balance"`
 }
 
+type SearchOutNo struct {
+	OutTradeNo string `json:"out_trade_no"`
+}
+
 type Response struct {
 	State int    `json:"state"`
 	Msg   string `json:"msg"`

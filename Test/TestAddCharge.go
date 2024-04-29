@@ -30,7 +30,7 @@ func BackGroundSynAddTest(IDSO model_srv.IDSO, Total int, OutNo string, TraID st
 	if saveResult.Error != nil || saveResult.RowsAffected == 0 {
 		return errors.New("db error")
 	} else {
-		fmt.Println("User created successfully")
+		fmt.Println("充值成功")
 		return nil
 	}
 

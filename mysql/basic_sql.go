@@ -65,7 +65,7 @@ func BackGroundSynAdd(IDSO model_srv.IDSO, result model_srv.ChargeMessage) error
 	if saveResult.Error != nil || saveResult.RowsAffected == 0 {
 		return errors.New("db error")
 	} else {
-		fmt.Println("User created successfully")
+		fmt.Println("充值成功")
 		return nil
 	}
 
@@ -87,7 +87,7 @@ func BackGroundSynReduce(IDSRS model_srv.IDSRS) error {
 	if saveResult.Error != nil || saveResult.RowsAffected == 0 {
 		return errors.New("db error")
 	} else {
-		fmt.Println("User created successfully")
+		fmt.Println("充值成功")
 		return nil
 	}
 

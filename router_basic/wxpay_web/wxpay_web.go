@@ -111,7 +111,15 @@ func SearchOrder(c *gin.Context) {
 	var instance gopay_api.WxPayIstance
 	pay_api = instance
 
-	no := c.PostForm("outTradeNo")
+	var search model_srv.SearchOutNo
+
+	if err := c.ShouldBind(&search); err != nil {
+		responses.FailWithMessage(responses.ParamErr, "传递参数错误", c)
+		return
+	}
+
+	no := search.OutTradeNo
+
 	params, err := pay_api.WxV3Query(no)
 	if err != nil {
 		responses.FailWithMessage(responses.ParamErr, "交易查询失败", c)
@@ -131,6 +139,11 @@ func PushChargeMessToPayQueue(c *gin.Context) {
 	var idso model_srv.IDSO
 	if err := c.ShouldBind(&idso); err != nil {
 		responses.FailWithMessage(responses.ParamErr, "参数错误", c)
+		return
+	}
+
+	if idso.IDSUserID == "" || (idso.IDSStoreID != "1" && idso.IDSStoreID != "2") {
+		responses.FailWithMessage(responses.ParamErr, "意外的参数错误", c)
 		return
 	}
 
