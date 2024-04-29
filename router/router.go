@@ -1,6 +1,7 @@
 package router
 
 import (
+	gopayapi "pay/gopay_api"
 	"pay/router_basic/ping"
 	"pay/router_basic/wxpay_web"
 
@@ -20,6 +21,11 @@ func InitRouter() {
 
 	}
 
+	wxOptions := r.Group("options")
+	{
+		wxOptions.POST("GetOpenId", gopayapi.GetOpenIDBycode2Session)
+	}
+
 	api := r.Group("api")
 	{
 		api.POST("PayNotify", wxpay_web.PayNotify) //通过
@@ -27,8 +33,8 @@ func InitRouter() {
 
 	syn := r.Group("syn")
 	{
-		syn.POST("AddNotrify", wxpay_web.AddNotrify)     //通过
-		syn.POST("ReduceNotify", wxpay_web.ReduceNotify) //通过
+		syn.POST("AddNotrify", wxpay_web.AddNotrify)         //通过
+		syn.POST("SnowReduceNotify", wxpay_web.ReduceNotify) //通过
 	}
 
 	r.Run(":3636")

@@ -26,7 +26,7 @@ const (
 type WxPayIstance struct {
 }
 
-func GetOpenIDBycode2Session(c *gin.Context) (string, error) {
+func GetOpenIDBycode2Session(c *gin.Context) {
 	//获取code
 	code := c.PostForm("code")
 	wx_cfg := global.ReturnCfg()
@@ -34,16 +34,21 @@ func GetOpenIDBycode2Session(c *gin.Context) (string, error) {
 	url := fmt.Sprintf(code2sessionURL, wx_cfg.WxClient.AppID, wx_cfg.WxClient.AppSecret, code)
 	resp, err := http.Get(url)
 	if err != nil {
-		return "", err
+		responses.FailWithMessage(responses.ServerErr, "请求微信接口失败", c)
+		return
 	}
-	var wxMap map[string]string
+
+	wxMap := make(map[string]string)
+
 	err = json.NewDecoder(resp.Body).Decode(&wxMap)
 	if err != nil {
-		return "", err
+		responses.FailWithMessage(responses.ServerErr, "参数解析失败", c)
+		return
 	}
 	defer resp.Body.Close()
 
-	return wxMap["openid"], err
+	responses.OkWithDetailed(wxMap["openid"], "openid获取成功", c)
+
 }
 
 func GetOpenIDByFront() string {
