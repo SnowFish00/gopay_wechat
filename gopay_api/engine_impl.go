@@ -50,7 +50,7 @@ func GetOpenIDByFront() string {
 	return ""
 }
 
-func (WxPayIstance) AppletPay(c *gin.Context, Good model_srv.Good, Payer model_srv.Payer) (PrepayID string, Error error) {
+func (WxPayIstance) AppletPay(c *gin.Context, Good model_srv.Good, Payer model_srv.Payer) (PrepayID string, outTradeNo string, Error error) {
 	expire := time.Now().Add(10 * time.Minute).Format(time.RFC3339)
 
 	uuid := utils.NewUuid32()
@@ -79,10 +79,10 @@ func (WxPayIstance) AppletPay(c *gin.Context, Good model_srv.Good, Payer model_s
 
 	wxRsp, err := clientV3.V3TransactionJsapi(context.Background(), bm)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return wxRsp.Response.PrepayId, err
+	return wxRsp.Response.PrepayId, uuid, err
 
 }
 
@@ -239,7 +239,7 @@ func (WxPayIstance) WxPayNotifySyn(wxRsp *wechat.PrepayRsp) {
 // WxTestV3Query 交易查询 no TransactionId or outTradeNo
 func (WxPayIstance) WxV3Query(no string) (*wechat.QueryOrderRsp, error) {
 	clientV3 := global.ReturnClient()
-	wxRsp, err := clientV3.V3TransactionQueryOrder(context.Background(), wechat.TransactionId, no)
+	wxRsp, err := clientV3.V3TransactionQueryOrder(context.Background(), wechat.OutTradeNo, no)
 	if err != nil {
 		return nil, err
 	}

@@ -12,7 +12,7 @@ import (
 	"github.com/go-pay/gopay/wechat/v3"
 )
 
-func TestAppltPay() (PrepayID string, Error error) {
+func TestAppltPay() (PrepayID string, out string, Error error) {
 	expire := time.Now().Add(10 * time.Minute).Format(time.RFC3339)
 
 	uuid := utils.NewUuid32()
@@ -42,10 +42,10 @@ func TestAppltPay() (PrepayID string, Error error) {
 
 	wxRsp, err := clientV3.V3TransactionJsapi(context.Background(), bm)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return wxRsp.Response.PrepayId, err
+	return wxRsp.Response.PrepayId, uuid, err
 }
 
 func TestPaysigin(c *gin.Context) {
@@ -74,7 +74,7 @@ func TestPaysigin(c *gin.Context) {
 	// 普通支付通知解密
 	result, rErr := notifyReq.DecryptCipherText(cfg.WxClient.ApiV3Key)
 	if rErr != nil {
-		fmt.Printf("内容解密失败:%v", err.Error())
+		fmt.Printf("内容解密失败:%v", rErr.Error())
 		// c.JSON(http.StatusOK, &wechat.V3NotifyRsp{Code: gopay.FAIL, Message: "内容解密失败"})
 		return
 	}

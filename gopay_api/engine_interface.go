@@ -11,7 +11,7 @@ type PayAPI interface {
 	//openID
 	// GetOpenID() (string, error)
 	//小程序支付下单
-	AppletPay(c *gin.Context, Good model_srv.Good, Payer model_srv.Payer) (string, error)
+	AppletPay(c *gin.Context, Good model_srv.Good, Payer model_srv.Payer) (string, string, error)
 	//小程序sigin签名
 	PaySignOfApplet(Prepayid string) (*wechat.AppletParams, error)
 	//H5支付下单

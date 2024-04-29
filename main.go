@@ -27,7 +27,7 @@ func Test() {
 
 func PayOnlineTest() {
 	//在线充值订单构造测试
-	payID, err := test.TestAppltPay()
+	payID, out, err := test.TestAppltPay()
 	if err != nil {
 		fmt.Println("错误请求")
 		fmt.Println(err.Error())
@@ -41,8 +41,12 @@ func PayOnlineTest() {
 		fmt.Println(err.Error())
 	}
 
+	result := make(map[string]interface{})
+	result["AppletParams"] = parms
+	result["outTradeNo"] = out
+
 	// 将结构体实例转换为JSON格式的字符串
-	jsonData, err := json.Marshal(parms)
+	jsonData, err := json.Marshal(result)
 	if err != nil {
 		fmt.Println("转换为JSON时出错:", err)
 		return

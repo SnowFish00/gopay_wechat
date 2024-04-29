@@ -28,11 +28,21 @@ func StartOrder(c *gin.Context) {
 		return
 	}
 
+	if gp.MonryCent <= 0 {
+		responses.FailWithMessage(responses.ParamErr, "不是哥们?别乱搞奥!", c)
+		return
+	}
+
+	if gp.MonryCent%100 != 0 {
+		responses.FailWithMessage(responses.ParamErr, "别试了,小数不允许充值", c)
+		return
+	}
+
 	good.Description = gp.Description
 	good.MonryCent = gp.MonryCent
 	payer.Openid = gp.Openid
 
-	PrepayID, err := pay_api.AppletPay(c, good, payer)
+	PrepayID, outTradeNo, err := pay_api.AppletPay(c, good, payer)
 	if err != nil {
 		responses.FailWithMessage(responses.ServerErr, "订单下单错误", c)
 		return
@@ -44,8 +54,12 @@ func StartOrder(c *gin.Context) {
 		return
 	}
 
+	result := make(map[string]interface{})
+	result["AppletParams"] = Parms
+	result["outTradeNo"] = outTradeNo
+
 	//返回给微信支付前端方法 wx.requestPayment
-	responses.OkWithDetailed(Parms, "订单签发完成", c)
+	responses.OkWithDetailed(result, "订单签发完成", c)
 
 }
 
@@ -97,7 +111,7 @@ func SearchOrder(c *gin.Context) {
 	var instance gopay_api.WxPayIstance
 	pay_api = instance
 
-	no := c.PostForm("TransactionId")
+	no := c.PostForm("outTradeNo")
 	params, err := pay_api.WxV3Query(no)
 	if err != nil {
 		responses.FailWithMessage(responses.ParamErr, "交易查询失败", c)
@@ -125,6 +139,9 @@ func PushChargeMessToPayQueue(c *gin.Context) {
 		responses.FailWithMessage(responses.ParamErr, "订单不存在或已被使用", c)
 		return
 	}
+
+	//金额转化
+	order.Amount.Total = order.Amount.Total / 100
 
 	//管理后台同步
 	body := backgroundsyn.ChargeAddSyn(idso, order.Amount.Total)

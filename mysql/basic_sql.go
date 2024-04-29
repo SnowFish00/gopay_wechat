@@ -54,7 +54,7 @@ func BackGroundSynAdd(IDSO model_srv.IDSO, result model_srv.ChargeMessage) error
 		UserID:        IDSO.IDSUserID,
 		Openid:        IDSO.IDSOpenid,
 		Phone:         IDSO.IDSPhone,
-		Blance:        result.Amount.PayerTotal,
+		Blance:        result.Amount.Total,
 		StoreID:       IDSO.IDSStoreID,
 		OutTradeNo:    result.OutTradeNo,
 		TransactionId: result.TransactionId,
