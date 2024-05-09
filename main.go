@@ -12,6 +12,9 @@ import (
 )
 
 func init() {
+	//使用docker时解除这个⬇️
+	// global.SetCfg(config_viper.ConfigWithDocker())
+	//使用docker时注释掉这个⬇️
 	global.SetCfg(config_viper.Config())
 	global.SetDB(mysql.Mysql())
 	global.SetLogger(log.InitZap())

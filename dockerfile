@@ -9,6 +9,8 @@ FROM alpine
 WORKDIR /root/
 COPY --from=builder /pay .
 COPY --from=builder /config/config.yml ./config/
-EXPOSE 3636
+COPY --from=builder /config/com.pem ./config/
+# 若数据库为公网则无需暴漏3306
+EXPOSE 3636 3306
 CMD ["ls"]
-ENTRYPOINT [ "./pay" ]
+ENTRYPOINT [ "/root/pay" ]
